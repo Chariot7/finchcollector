@@ -1,24 +1,44 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from .models import Finch
+from .forms import FeedingForm
 
-class Finch:  # Note that parens are optional if not inheriting from another class
-  def __init__(self, name, breed, description, age):
-    self.name = name
-    self.breed = breed
-    self.description = description
-    self.age = age
+#CBVs
 
-finches = [
-  Finch('Lolo', 'birdy', 'sqeeky squaker', 3),
-  Finch('Sachi', 'green feathered', 'flies high', 0),
-  Finch('Raven', 'midnight black', 'chirp chirp', 4)
-]
+class FinchUpdate(UpdateView):
+  model = Finch
+  fields = ['breed', 'description', 'age']
+
+class FinchDelete(DeleteView):
+  model = Finch
+  success_url = '/finches/'
+
+#CBV for creating finches and viewing the form
+class FinchCreate(CreateView):
+  model = Finch
+  fields = '__all__'
+
 
 # Define the home view
 def home(request):
-  return HttpResponse('<h1>Hello Finch peeps</h1>')
+  return render(request, 'home.html')
 def about(request):
   return render(request, 'about.html')
 
 def finches_index(request):
-    return render(request, 'finches/index.html', {'finches': finches})
+  finches = Finch.objects.all()
+  return render(request, 'finches/index.html', {'finches': finches})
+
+def finches_detail(request, finch_id):
+  finch = Finch.objects.get(id=finch_id)
+  feeding_form = FeedingForm()
+  return render(request, 'finches/detail.html', {'finch': finch,
+  'feeding_form': feeding_form})
+
+def add_feeding(request, finch_id):
+  form = FeedingForm(request.POST)
+  if form.is_valid():
+    new_feeding = form.save(commit=False)
+    new_feeding.finch_id = finch_id
+    new_feeding.save()
+  return redirect('detail', finch_id=finch_id)
