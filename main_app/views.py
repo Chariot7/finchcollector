@@ -13,6 +13,20 @@ from .forms import FeedingForm
 S3_BASE_URL = 'https://s3-us-west-1.amazonaws.com/'
 BUCKET = 'finchcollector'
 
+def signup(request):
+  error_message = ''
+  if request.method == 'POST':
+    form = UserCreationForm(request.POST)
+    if form.is_valid():
+      user = form.save()
+      login(request, user)
+      return redirect('index')
+    else:
+      error_message = 'Invalid credentials - try again'
+  form = UserCreationForm()
+  context = {'form': form, 'error_message': error_message}
+  return render(request, 'registration/signup.html', context)
+
 class FinchUpdate(UpdateView):
   model = Finch
   fields = ['breed', 'description', 'age']
